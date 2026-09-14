@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 
+import adminRoutes from "./routes/adminRoutes.js";
 import parcelRoutes from "./routes/parcelRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
@@ -50,6 +51,11 @@ app.use(
     parcelRoutes
 );
 
+app.use(
+    "/api/admin",
+    adminRoutes
+);
+
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -88,7 +94,7 @@ app.use(
                 .json({
                     success: false,
                     message:
-                        "An account already exists with this information.",
+                        "Duplicate data detected.",
                 });
         }
 
