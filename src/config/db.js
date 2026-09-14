@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 
 const connectDB = async () => {
-    const mongoUri =
-        process.env.MONGODB_URI;
+    const mongoUri = process.env.MONGODB_URI;
 
     if (!mongoUri) {
         throw new Error(
@@ -10,10 +9,15 @@ const connectDB = async () => {
         );
     }
 
-    await mongoose.connect(mongoUri);
+    const connection =
+        await mongoose.connect(mongoUri);
 
     console.log(
-        `MongoDB connected: ${mongoose.connection.host}`
+        `MongoDB connected: ${connection.connection.host}`
+    );
+
+    console.log(
+        `MongoDB database: ${connection.connection.name}`
     );
 };
 
