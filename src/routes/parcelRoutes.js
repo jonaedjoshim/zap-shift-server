@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import {
     createParcel,
+    getMyParcels,
     getParcelByTrackingId,
 } from "../controllers/parcelController.js";
 
@@ -18,6 +19,13 @@ router.post(
         "admin"
     ),
     createParcel
+);
+
+router.get(
+    "/my-parcels",
+    verifyFirebaseToken,
+    authorizeRoles("user"),
+    getMyParcels
 );
 
 router.get(

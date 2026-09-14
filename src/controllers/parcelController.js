@@ -145,12 +145,10 @@ export const createParcel = async (
                     parcel.trackingId,
 
                 cost:
-                    parcel.pricing
-                        .amount,
+                    parcel.pricing.amount,
 
                 currency:
-                    parcel.pricing
-                        .currency,
+                    parcel.pricing.currency,
 
                 paymentStatus:
                     parcel.pricing
@@ -160,6 +158,40 @@ export const createParcel = async (
                     parcel.shipment
                         .status,
             },
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+export const getMyParcels = async (
+    req,
+    res,
+    next
+) => {
+    try {
+        if (!req.user?.email) {
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Authenticated user email is required.",
+            });
+        }
+
+        const parcels =
+            await Parcel.find({
+                createdBy:
+                    req.user.email,
+            })
+                .sort({
+                    createdAt: -1,
+                })
+                .lean();
+
+        return res.status(200).json({
+            success: true,
+            count: parcels.length,
+            data: parcels,
         });
     } catch (error) {
         next(error);
