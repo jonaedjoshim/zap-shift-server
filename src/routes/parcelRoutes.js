@@ -5,9 +5,15 @@ import {
     getParcelByTrackingId,
 } from "../controllers/parcelController.js";
 
+import verifyFirebaseToken from "../middleware/verifyFirebaseToken.js";
+
 const router = Router();
 
-router.post("/", createParcel);
+router.post(
+    "/",
+    verifyFirebaseToken,
+    createParcel
+);
 
 router.get(
     "/track/:trackingId",

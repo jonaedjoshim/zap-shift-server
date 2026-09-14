@@ -1,4 +1,5 @@
 import Parcel from "../models/Parcel.js";
+
 import calculateParcelCost from "../utils/calculateParcelCost.js";
 import generateTrackingId from "../utils/generateTrackingId.js";
 
@@ -10,13 +11,20 @@ export const createParcel = async (
     try {
         const data = req.body;
 
-        const cost = calculateParcelCost({
-            parcelType: data.parcelType,
-            weight: data.parcelWeight,
-            senderRegion: data.senderRegion,
-            receiverRegion:
-                data.receiverRegion,
-        });
+        const cost =
+            calculateParcelCost({
+                parcelType:
+                    data.parcelType,
+
+                weight:
+                    data.parcelWeight,
+
+                senderRegion:
+                    data.senderRegion,
+
+                receiverRegion:
+                    data.receiverRegion,
+            });
 
         if (cost === null) {
             return res.status(400).json({
@@ -26,35 +34,52 @@ export const createParcel = async (
             });
         }
 
+        if (!req.user?.email) {
+            return res.status(401).json({
+                success: false,
+                message:
+                    "Authenticated user email is required.",
+            });
+        }
+
         const trackingId =
             generateTrackingId();
 
-        const parcel = await Parcel.create({
-            ...data,
+        const parcel =
+            await Parcel.create({
+                ...data,
 
-            trackingId,
+                trackingId,
 
-            cost,
+                cost,
 
-            parcelWeight:
-                data.parcelType ===
-                    "document"
-                    ? null
-                    : Number(
-                        data.parcelWeight
-                    ),
+                parcelWeight:
+                    data.parcelType ===
+                        "document"
+                        ? null
+                        : Number(
+                            data.parcelWeight
+                        ),
 
-            paymentStatus: "unpaid",
-            deliveryStatus: "pending",
+                createdBy:
+                    req.user.email,
 
-            trackingHistory: [
-                {
-                    status: "pending",
-                    message:
-                        "Parcel booking created.",
-                },
-            ],
-        });
+                paymentStatus:
+                    "unpaid",
+
+                deliveryStatus:
+                    "pending",
+
+                trackingHistory: [
+                    {
+                        status:
+                            "pending",
+
+                        message:
+                            "Parcel booking created.",
+                    },
+                ],
+            });
 
         return res.status(201).json({
             success: true,
