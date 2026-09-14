@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 
 import parcelRoutes from "./routes/parcelRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 
@@ -40,11 +41,15 @@ app.get(
 );
 
 app.use(
+    "/api/users",
+    userRoutes
+);
+
+app.use(
     "/api/parcels",
     parcelRoutes
 );
 
-/* 404 */
 app.use((req, res) => {
     res.status(404).json({
         success: false,
@@ -53,7 +58,6 @@ app.use((req, res) => {
     });
 });
 
-/* Global error handler */
 app.use(
     (error, req, res, next) => {
         console.error(error);
@@ -67,7 +71,7 @@ app.use(
                 .json({
                     success: false,
                     message:
-                        "Parcel validation failed.",
+                        "Validation failed.",
                     errors:
                         Object.values(
                             error.errors
@@ -84,7 +88,7 @@ app.use(
                 .json({
                     success: false,
                     message:
-                        "Duplicate data detected.",
+                        "An account already exists with this information.",
                 });
         }
 
