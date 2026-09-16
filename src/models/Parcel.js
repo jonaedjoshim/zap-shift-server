@@ -55,7 +55,12 @@ const trackingEventSchema = new mongoose.Schema(
 const parcelSchema = new mongoose.Schema(
     {
         trackingId: { type: String, required: true, unique: true, index: true, trim: true },
-        deliveryOTP: { type: String, required: true }, // New OTP field
+        // Safe OTP default for legacy parcels
+        deliveryOTP: {
+            type: String,
+            required: true,
+            default: () => Math.floor(100000 + Math.random() * 900000).toString(),
+        },
         parcel: { type: parcelInfoSchema, required: true },
         sender: { type: contactSchema, required: true },
         receiver: { type: contactSchema, required: true },
