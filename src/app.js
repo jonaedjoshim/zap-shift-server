@@ -40,7 +40,6 @@ app.get(["/api/health", "/health"], (req, res) => {
     });
 });
 
-// Support both /api/xxx and /xxx for Vercel Serverless Routing
 app.use(["/api/users", "/users"], userRoutes);
 app.use(["/api/parcels", "/parcels"], parcelRoutes);
 app.use(["/api/payments", "/payments"], paymentRoutes);
@@ -59,17 +58,18 @@ app.use((error, req, res, next) => {
     console.error(error);
 
     if (error.name === "ValidationError") {
+        const messages = Object.values(error.errors).map((item) => item.message);
         return res.status(400).json({
             success: false,
-            message: "Validation failed.",
-            errors: Object.values(error.errors).map((item) => item.message),
+            message: messages.join(", ") || "Validation failed.",
+            errors: messages,
         });
     }
 
     if (error.code === 11000) {
         return res.status(409).json({
             success: false,
-            message: "Duplicate data detected.",
+            message: "Duplicate entry detected.",
         });
     }
 
