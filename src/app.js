@@ -6,6 +6,7 @@ import parcelRoutes from "./routes/parcelRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import riderRoutes from "./routes/riderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 const app = express();
 
@@ -43,7 +44,7 @@ app.use("/api/parcels", parcelRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/riders", riderRoutes);
 app.use("/api/admin", adminRoutes);
-
+app.use("/api/reviews", reviewRoutes);
 app.use((req, res) => {
     res.status(404).json({
         success: false,
