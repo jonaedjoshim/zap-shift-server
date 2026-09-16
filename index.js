@@ -1,6 +1,7 @@
 import "dotenv/config";
 import dns from "node:dns";
 
+// Fix local DNS issue for MongoDB Atlas if enabled in .env
 if (process.env.USE_CUSTOM_DNS === "true") {
     dns.setServers(["1.1.1.1", "8.8.8.8"]);
 }
@@ -8,7 +9,7 @@ if (process.env.USE_CUSTOM_DNS === "true") {
 import app from "./src/app.js";
 import connectDB from "./src/config/db.js";
 
-// Database Connection for Serverless Execution
+// Ensure DB connection is maintained across requests (for Vercel & Local)
 let isConnected = false;
 const ensureDbConnected = async () => {
     if (!isConnected) {
@@ -17,27 +18,35 @@ const ensureDbConnected = async () => {
     }
 };
 
-// Middleware to ensure DB connection on Vercel requests
+// Middleware to ensure DB connection before processing any API request
 app.use(async (req, res, next) => {
     try {
         await ensureDbConnected();
         next();
     } catch (error) {
-        console.error("DB connection error in serverless execution:", error);
+        console.error("Database connection middleware error:", error);
         res.status(500).json({
             success: false,
-            message: "Database connection failed.",
+            message: "Failed to connect to the database.",
         });
     }
 });
 
-// For Local Development Server
+// Start server for Local Development
 if (process.env.NODE_ENV !== "production") {
     const PORT = process.env.PORT || 5000;
-    app.listen(PORT, () => {
-        console.log(`ZapShift local server running on http://localhost:${PORT}`);
-    });
+    const startLocalServer = async () => {
+        try {
+            await ensureDbConnected();
+            app.listen(PORT, () => {
+                console.log(`ZapShift local server running on http://localhost:${PORT}`);
+            });
+        } catch (error) {
+            console.error("Failed to start local server:", error.message);
+        }
+    };
+    startLocalServer();
 }
 
-// Export for Vercel Serverless
+// Export express app for Vercel Serverless execution
 export default app;
