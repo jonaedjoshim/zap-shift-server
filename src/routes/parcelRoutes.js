@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import {
+    assignRiderToParcel,
     createParcel,
     getMyParcels,
     getParcelByTrackingId,
@@ -14,10 +15,7 @@ const router = Router();
 router.post(
     "/",
     verifyFirebaseToken,
-    authorizeRoles(
-        "user",
-        "admin"
-    ),
+    authorizeRoles("user", "admin"),
     createParcel
 );
 
@@ -31,6 +29,13 @@ router.get(
 router.get(
     "/track/:trackingId",
     getParcelByTrackingId
+);
+
+router.patch(
+    "/:parcelId/assign-rider",
+    verifyFirebaseToken,
+    authorizeRoles("admin"),
+    assignRiderToParcel
 );
 
 export default router;

@@ -3,28 +3,41 @@ import Parcel from "../models/Parcel.js";
 import Payment from "../models/Payment.js";
 import RiderApplication from "../models/RiderApplication.js";
 
-// Get Overall Admin Statistics
 export const getAdminStats = async (req, res, next) => {
     try {
         const totalUsers = await User.countDocuments();
+        const totalRiders = await User.countDocuments({ role: "rider" });
         const totalParcels = await Parcel.countDocuments();
+        const pendingParcels = await Parcel.countDocuments({
+            "shipment.status": "pending",
+        });
+        const deliveredParcels = await Parcel.countDocuments({
+            "shipment.status": "delivered",
+        });
+        const unassignedPaidParcels = await Parcel.countDocuments({
+            "pricing.paymentStatus": "paid",
+            "shipment.riderId": null,
+            "shipment.status": { $nin: ["delivered", "cancelled"] },
+        });
+        const pendingRiderApps = await RiderApplication.countDocuments({
+            status: "pending",
+        });
 
-        const pendingParcels = await Parcel.countDocuments({ "shipment.status": "pending" });
-        const deliveredParcels = await Parcel.countDocuments({ "shipment.status": "delivered" });
-
-        const pendingRiderApps = await RiderApplication.countDocuments({ status: "pending" });
-
-        // Total Revenue Calculation
         const payments = await Payment.find().lean();
-        const totalRevenue = payments.reduce((acc, curr) => acc + (curr.amount || 0), 0);
+        const totalRevenue = payments.reduce(
+            (acc, curr) => acc + (curr.amount || 0),
+            0
+        );
 
         return res.status(200).json({
             success: true,
             data: {
                 totalUsers,
+                totalRiders,
                 totalParcels,
                 pendingParcels,
                 deliveredParcels,
+                unassignedPaidParcels,
                 pendingRiderApps,
                 totalRevenue,
             },
@@ -34,7 +47,6 @@ export const getAdminStats = async (req, res, next) => {
     }
 };
 
-// Get All Registered Users
 export const getAllUsers = async (req, res, next) => {
     try {
         const users = await User.find().sort({ createdAt: -1 }).lean();
@@ -49,7 +61,26 @@ export const getAllUsers = async (req, res, next) => {
     }
 };
 
-// Update User Role (User/Rider/Admin)
+export const getAllRiders = async (req, res, next) => {
+    try {
+        const riders = await User.find({
+            role: "rider",
+            status: "active",
+        })
+            .sort({ name: 1 })
+            .select("_id name email phone photoURL")
+            .lean();
+
+        return res.status(200).json({
+            success: true,
+            count: riders.length,
+            data: riders,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 export const updateUserRole = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -84,10 +115,12 @@ export const updateUserRole = async (req, res, next) => {
     }
 };
 
-// Get All Parcels in System
 export const getAllParcels = async (req, res, next) => {
     try {
-        const parcels = await Parcel.find().sort({ createdAt: -1 }).lean();
+        const parcels = await Parcel.find()
+            .populate("shipment.riderId", "name email phone")
+            .sort({ createdAt: -1 })
+            .lean();
 
         return res.status(200).json({
             success: true,
