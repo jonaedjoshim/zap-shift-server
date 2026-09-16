@@ -103,6 +103,89 @@ export const getMyDeliveries = async (req, res, next) => {
     }
 };
 
+// Rider: Update status of an assigned parcel
+export const updateDeliveryStatus = async (req, res, next) => {
+    try {
+        const { parcelId } = req.params;
+        const { status, message } = req.body;
+
+        const allowedStatuses = [
+            "picked-up",
+            "in-transit",
+            "at-warehouse",
+            "out-for-delivery",
+            "delivered",
+            "cancelled",
+        ];
+
+        if (!allowedStatuses.includes(status)) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid status value provided.",
+            });
+        }
+
+        const currentUser = await User.findOne({ firebaseUid: req.user.uid });
+
+        if (!currentUser) {
+            return res.status(404).json({
+                success: false,
+                message: "User profile not found.",
+            });
+        }
+
+        const parcel = await Parcel.findOne({
+            _id: parcelId,
+            "shipment.riderId": currentUser._id,
+        });
+
+        if (!parcel) {
+            return res.status(404).json({
+                success: false,
+                message: "Parcel not found or not assigned to you.",
+            });
+        }
+
+        if (parcel.shipment?.status === "delivered") {
+            return res.status(400).json({
+                success: false,
+                message: "Parcel is already delivered and cannot be changed.",
+            });
+        }
+
+        const defaultMessages = {
+            "picked-up": "Parcel picked up by rider.",
+            "in-transit": "Parcel is in transit to destination hub.",
+            "at-warehouse": "Parcel received at local distribution warehouse.",
+            "out-for-delivery": "Parcel is out for delivery with rider.",
+            delivered: "Parcel delivered successfully.",
+            cancelled: "Delivery cancelled by rider/admin.",
+        };
+
+        parcel.shipment.status = status;
+
+        if (status === "delivered") {
+            parcel.shipment.deliveredAt = new Date();
+        }
+
+        parcel.trackingHistory.push({
+            status,
+            message: message || defaultMessages[status] || `Status updated to ${status}`,
+            timestamp: new Date(),
+        });
+
+        await parcel.save();
+
+        return res.status(200).json({
+            success: true,
+            message: `Parcel status updated to '${status}'.`,
+            data: parcel,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 // Rider: Get rider earnings & statistics
 export const getRiderStats = async (req, res, next) => {
     try {
@@ -128,7 +211,7 @@ export const getRiderStats = async (req, res, next) => {
                 totalDelivered++;
 
                 const isSameRegion = p.sender?.region === p.receiver?.region;
-                const commissionRate = isSameRegion ? 0.8 : 0.6; // 80% same city, 60% outside
+                const commissionRate = isSameRegion ? 0.8 : 0.6;
                 const earning = (p.pricing?.amount || 0) * commissionRate;
 
                 totalEarnings += earning;
