@@ -4,9 +4,9 @@ import express from "express";
 import adminRoutes from "./routes/adminRoutes.js";
 import parcelRoutes from "./routes/parcelRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 import riderRoutes from "./routes/riderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import reviewRoutes from "./routes/reviewRoutes.js";
 
 const app = express();
 
@@ -25,14 +25,14 @@ app.use(
 
 app.use(express.json());
 
-app.get("/", (req, res) => {
+app.get(["/", "/api"], (req, res) => {
     res.status(200).json({
         success: true,
         message: "ZapShift API is running.",
     });
 });
 
-app.get("/api/health", (req, res) => {
+app.get(["/api/health", "/health"], (req, res) => {
     res.status(200).json({
         success: true,
         status: "healthy",
@@ -40,12 +40,14 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-app.use("/api/users", userRoutes);
-app.use("/api/parcels", parcelRoutes);
-app.use("/api/payments", paymentRoutes);
-app.use("/api/riders", riderRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api/reviews", reviewRoutes);
+// Support both /api/xxx and /xxx for Vercel Serverless Routing
+app.use(["/api/users", "/users"], userRoutes);
+app.use(["/api/parcels", "/parcels"], parcelRoutes);
+app.use(["/api/payments", "/payments"], paymentRoutes);
+app.use(["/api/riders", "/riders"], riderRoutes);
+app.use(["/api/admin", "/admin"], adminRoutes);
+app.use(["/api/reviews", "/reviews"], reviewRoutes);
+
 app.use((req, res) => {
     res.status(404).json({
         success: false,
