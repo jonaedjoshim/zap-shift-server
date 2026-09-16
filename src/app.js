@@ -4,6 +4,7 @@ import express from "express";
 import adminRoutes from "./routes/adminRoutes.js";
 import parcelRoutes from "./routes/parcelRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import riderRoutes from "./routes/riderRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
@@ -40,6 +41,7 @@ app.get("/api/health", (req, res) => {
 app.use("/api/users", userRoutes);
 app.use("/api/parcels", parcelRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/riders", riderRoutes);
 app.use("/api/admin", adminRoutes);
 
 app.use((req, res) => {
